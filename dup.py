@@ -10,8 +10,12 @@ import dotenv
 import requests
 import docker
 
-from providers import dockerhub
-from notifications import *
+from providers import (
+    dockerhub,
+)
+from notifications import (
+    mail,
+)
 
 
 config = {**dotenv.dotenv_values("./dup.env"), **dotenv.dotenv_values("./dup.creds.env"), }
@@ -26,6 +30,10 @@ class Docker(object):
         self.client = docker.from_env()
         self.registries = {
             "dockerhub": dockerhub.Provider(self.session, config["DUP_DOCKERHUB_ACCESS_TOKEN"]),
+        }
+        self.notifications = {
+            "mail": mail.Notification(host=config["DUP_NOTIFICATION_EMAIL_HOST"],
+                                      port=int(config["DUP_NOTIFICATION_EMAIL_PORT"])),
         }
 
     def get_images(self):
@@ -65,6 +73,16 @@ class Docker(object):
             for rk, rv in self.registries.items():
                 self.registries[rk].compare_image(iv)
                 logging.info(f"registry: {rk} | image: {ik}")
+
+    def notify(self, message):
+        if config["DUP_NOTIFICATION_METHOD"] == "mail":
+            self.notifications["mail"].send(subject=config["DUP_NOTIFICATION_EMAIL_SUBJECT"].strip(),
+                                            body=message.strip(),
+                                            mail_from=config["DUP_NOTIFICATION_EMAIL_FROM"].strip(),
+                                            mail_to=config["DUP_NOTIFICATION_EMAIL_RCPT_TO"].strip().split(";"),
+                                            mail_cc=config["DUP_NOTIFICATION_EMAIL_RCPT_CC_TO"].strip().split(";"))
+
+        logging.info(f"Sent {config['DUP_NOTIFICATION_METHOD']} notification.")
 
     def main(self):
         images = self.get_images()
