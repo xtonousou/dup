@@ -4,6 +4,7 @@ services:
   dup:
     image: "xtonousou/dup:latest"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./dup.env:/app/dup.env"
-      - "./dup.creds.env:/app/dup.creds.env"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./dup.env:/app/dup.env:ro"
+      - "./dup.creds.env:/app/dup.creds.env:ro"
+    restart: "unless-stopped"
