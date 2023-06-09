@@ -3,7 +3,7 @@
 #   Sotirios Roussis <root@xtonousou.com>
 
 import os
-import json
+import time
 import logging
 
 import dotenv
@@ -34,8 +34,6 @@ class Docker(object):
         # iterate running containers
         for c in self.client.containers.list(all=False):
             docker_image_id = c.image.short_id.split(":")[-1]
-
-            # print(json.dumps(c.image.attrs, indent=4, sort_keys=True))
 
             docker_container_image_repo_tags = c.image.attrs.get("RepoTags")
             docker_image_name, docker_image_tag = "", ""
@@ -68,11 +66,14 @@ class Docker(object):
                 self.registries[rk].compare_image(iv)
                 logging.info(f"registry: {rk} | image: {ik}")
 
-def main():
-    d = Docker()
-    docker_images = d.get_images()
-    d.check_images(docker_images)
+    def main(self):
+        images = self.get_images()
+        self.check_images(images)
 
 
 if __name__ == "__main__":
-    main()
+    d = Docker()
+
+    while True:
+        d.main()
+        time.sleep(int(config["DUP_CHECK_INTERVAL"].strip()))
